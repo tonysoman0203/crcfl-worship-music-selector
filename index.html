@@ -935,7 +935,7 @@
 
         async function saveSongToDb(song) {
             try {
-                const response = await fetch(`${DB_API}/songs`, {
+                const response = await fetch(`${DB_URL}/songs`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(song)
