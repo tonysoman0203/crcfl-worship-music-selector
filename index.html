@@ -960,7 +960,7 @@
 
         async function deleteSongFromDb(id) {
             try {
-                await fetch(`${DB_API}/songs/${id}`, { method: 'DELETE' });
+                await fetch(`${DB_URL}/songs/${id}`, { method: 'DELETE' });
             } catch (e) {
                 console.error('Delete failed:', e);
             }
