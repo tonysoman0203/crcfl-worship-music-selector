@@ -642,13 +642,13 @@
 
     <script>
        // 全域變數初始化
-        let songs = [];
-        let currentFilter = 'all';
+        var songs = [];
+        var currentFilter = 'all';
         const categoryLabels = {
-        worship: '敬拜',
-        pray: '祈禱', 
-        thanks: '感謝',
-        response: '回應'
+            worship: '敬拜',
+            pray: '祈禱', 
+            thanks: '感謝',
+            response: '回應'
         };
 
         // 確保 escapeHtml 函數存在
@@ -790,17 +790,15 @@
     .join('');
 }
 
-
-// 抽出來重複用的空狀態
-function emptyStateHtml(filter) {
-  return `
-    <div class="empty-state">
-      <div class="empty-state-icon">🎶</div>
-      <p>${filter === 'all' ? '還沒有新增歌曲。' : `此分類中還沒有歌曲。`}<br>開始新增你的敬拜歌曲吧！</p>
-    </div>
-  `;
-}
-
+        // 抽出來重複用的空狀態
+        function emptyStateHtml(filter) {
+        return `
+            <div class="empty-state">
+            <div class="empty-state-icon">🎶</div>
+            <p>${filter === 'all' ? '還沒有新增歌曲。' : `此分類中還沒有歌曲。`}<br>開始新增你的敬拜歌曲吧！</p>
+            </div>
+        `;
+        }
 
         function viewLyrics(id) {
             const song = songs.find(s => s.id === id);
@@ -1031,33 +1029,33 @@ function emptyStateHtml(filter) {
         }
 
         async function loadSongsFromDb() {
-  try {
-    const res = await fetch(`${DB_API}/songs.json`);
-    if (!res.ok) {
-      console.warn('No songs found or DB error:', res.status);
-      songs = [];
-      renderSongs();
-      return;
-    }
-    
-    const rawData = await res.json();
-    
-    if (rawData) {
-      songs = Object.entries(rawData).map(([recordKey, songData]) => ({
-        recordKey,
-        ...songData
-      }));
-    } else {
-      songs = [];
-    }
-    
-    renderSongs();
-  } catch (error) {
-    console.error('Load songs error:', error);
-    songs = [];  // 重置為空陣列
-    renderSongs();
-  }
-}
+            try {
+                const res = await fetch(`${DB_API}/songs.json`);
+                if (!res.ok) {
+                console.warn('No songs found or DB error:', res.status);
+                songs = [];
+                renderSongs();
+                return;
+                }
+                
+                const rawData = await res.json();
+                
+                if (rawData) {
+                songs = Object.entries(rawData).map(([recordKey, songData]) => ({
+                    recordKey,
+                    ...songData
+                }));
+                } else {
+                songs = [];
+                }
+                
+                renderSongs();
+            } catch (error) {
+                console.error('Load songs error:', error);
+                songs = [];  // 重置為空陣列
+                renderSongs();
+            }
+            }
 
 
         async function deleteSongFromDb(id) {
@@ -1094,11 +1092,6 @@ function emptyStateHtml(filter) {
             renderSongs();
             updateStats();
         });
-
-        document.addEventListener('DOMContentLoaded', () => {
-  loadSongsFromDb();  // 先從 DB 載入
-  renderSongs();      // 顯示空狀態或資料
-});
 
     </script>
 
