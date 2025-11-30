@@ -949,7 +949,7 @@
 
         async function loadSongsFromDb() {
             try {
-                const response = await fetch(`${DB_API}/songs`);
+                const response = await fetch(`${DB_URL}/songs`);
                 const data = await response.json();
                 return data.songs || [];
             } catch (e) {
