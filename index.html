@@ -982,7 +982,7 @@
             try {
                 const response = await fetch(`${DB_API}/songs.json`);
                 const data = await response.json();
-                return data.songs || [];
+                return data || [];
             } catch (e) {
                 console.error('Load failed:', e);
                 return [];
