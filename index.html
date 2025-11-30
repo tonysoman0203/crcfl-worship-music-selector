@@ -716,39 +716,69 @@
         }
 
         function renderSongs() {
-            const container = document.getElementById('songsContainer');
-            const filteredSongs = currentFilter === 'all' 
-                ? songs 
-                : songs.filter(song => song.category === currentFilter);
+  const container = document.getElementById('songsContainer');
 
-            if (filteredSongs.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-state-icon">🎶</div>
-                        <p>${currentFilter === 'all' ? '還沒有新增歌曲。' : `此分類中還沒有歌曲。`}<br>開始新增你的敬拜歌曲吧！</p>
-                    </div>
-                `;
-                return;
+  // 1. 依目前 filter 取出對應歌曲
+  const filteredSongs =
+    currentFilter === 'all'
+      ? songs
+      : songs.filter(song => song.category === currentFilter);
+
+  // 2. 若無歌曲，顯示空狀態
+  if (!filteredSongs || filteredSongs.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon">🎶</div>
+        <p>${
+          currentFilter === 'all'
+            ? '還沒有新增歌曲。'
+            : `此分類中還沒有歌曲。`
+        }<br>開始新增你的敬拜歌曲吧！</p>
+      </div>
+    `;
+    return;
+  }
+
+  // 3. 渲染歌曲卡片
+  container.innerHTML = filteredSongs
+    .map(song => {
+      // 若有從 Firebase 帶回來的 recordKey，就用它；否則 fallback 用 id
+      const domId = song.recordKey || song.id;
+      const keyForActions = JSON.stringify(song.recordKey || song.id);
+
+      return `
+        <div id="song-${domId}" class="song-card ${song.category}">
+          <div class="song-category-badge ${song.category}">
+            ${categoryLabels[song.category] || song.category}
+          </div>
+          <h3 class="song-title">${escapeHtml(song.title || '')}</h3>
+          <p class="song-artist">🎤 ${escapeHtml(song.artist || '')}</p>
+          ${
+            song.note
+              ? `<p class="song-note">📝 ${escapeHtml(song.note)}</p>`
+              : ''
+          }
+          <div class="song-actions">
+            <button class="btn-small" onclick="viewLyrics(${keyForActions})">歌詞</button>
+            ${
+              song.youtubeUrl
+                ? `<button class="btn-small" onclick="viewYoutube(${keyForActions})">▶️</button>`
+                : ''
             }
+            ${
+              song.sheetUrl
+                ? `<button class="btn-small" onclick="viewSheet(${keyForActions})">📄</button>`
+                : ''
+            }
+            <button class="btn-small" onclick="editSong(${keyForActions})">編輯</button>
+            <button class="btn-small btn-delete" onclick="deleteSong(${keyForActions})">刪除</button>
+          </div>
+        </div>
+      `;
+    })
+    .join('');
+}
 
-            container.innerHTML = filteredSongs.map(song => `
-                <div id="song-${song.id}" class="song-card ${song.category}">
-                    <div class="song-category-badge ${song.category}">
-                        ${categoryLabels[song.category]}
-                    </div>
-                    <h3 class="song-title">${escapeHtml(song.title)}</h3>
-                    <p class="song-artist">🎤 ${escapeHtml(song.artist)}</p>
-                    ${song.note ? `<p class="song-note">📝 ${escapeHtml(song.note)}</p>` : ''}
-                    <div class="song-actions">
-                        <button class="btn-small" onclick="viewLyrics(${song.id})">歌詞</button>
-                        ${song.youtubeUrl ? `<button class="btn-small" onclick="viewYoutube(${song.id})">▶️</button>` : ''}
-                        ${song.sheetUrl ? `<button class="btn-small" onclick="viewSheet(${song.id})">📄</button>` : ''}
-                        <button class="btn-small" onclick="editSong(${song.id})">編輯</button>
-                        <button class="btn-small btn-delete" onclick="deleteSong(${song.id})">刪除</button>
-                    </div>
-                </div>
-            `).join('');
-        }
 
         function viewLyrics(id) {
             const song = songs.find(s => s.id === id);
