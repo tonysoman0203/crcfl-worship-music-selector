@@ -980,7 +980,7 @@
 
         async function loadSongsFromDb() {
             try {
-                const response = await fetch(`${DB_API}/songs.json`);
+                const response = await fetch(`${DB_API}/songs`);
                 const data = await response.json();
                 return data.songs || [];
             } catch (e) {
