@@ -717,66 +717,64 @@
 
         function renderSongs() {
   const container = document.getElementById('songsContainer');
+  
+  // 1. 確保 songs 是陣列，不是 Firebase 原始物件
+  if (!Array.isArray(songs)) {
+    if (!songs) {
+      container.innerHTML = emptyStateHtml('all');
+      return;
+    }
+    // 從 Firebase 物件轉陣列
+    songs = Object.entries(songs).map(([recordKey, songData]) => ({
+      recordKey,
+      ...songData
+    }));
+  }
 
-  // 1. 依目前 filter 取出對應歌曲
-  const filteredSongs =
-    currentFilter === 'all'
-      ? songs
-      : songs.filter(song => song.category === currentFilter);
+  // 2. 過濾歌曲
+  const filteredSongs = currentFilter === 'all' 
+    ? songs 
+    : songs.filter(song => song.category === currentFilter);
 
-  // 2. 若無歌曲，顯示空狀態
-  if (!filteredSongs || filteredSongs.length === 0) {
-    container.innerHTML = `
-      <div class="empty-state">
-        <div class="empty-state-icon">🎶</div>
-        <p>${
-          currentFilter === 'all'
-            ? '還沒有新增歌曲。'
-            : `此分類中還沒有歌曲。`
-        }<br>開始新增你的敬拜歌曲吧！</p>
-      </div>
-    `;
+  // 3. 檢查是否為陣列且有資料
+  if (!Array.isArray(filteredSongs) || filteredSongs.length === 0) {
+    container.innerHTML = emptyStateHtml(currentFilter);
     return;
   }
 
-  // 3. 渲染歌曲卡片
-  container.innerHTML = filteredSongs
-    .map(song => {
-      // 若有從 Firebase 帶回來的 recordKey，就用它；否則 fallback 用 id
-      const domId = song.recordKey || song.id;
-      const keyForActions = JSON.stringify(song.recordKey || song.id);
+  // 4. 渲染卡片
+  container.innerHTML = filteredSongs.map(song => {
+    const domId = song.recordKey || song.id;
+    const keyForActions = JSON.stringify(song.recordKey || song.id);
 
-      return `
-        <div id="song-${domId}" class="song-card ${song.category}">
-          <div class="song-category-badge ${song.category}">
-            ${categoryLabels[song.category] || song.category}
-          </div>
-          <h3 class="song-title">${escapeHtml(song.title || '')}</h3>
-          <p class="song-artist">🎤 ${escapeHtml(song.artist || '')}</p>
-          ${
-            song.note
-              ? `<p class="song-note">📝 ${escapeHtml(song.note)}</p>`
-              : ''
-          }
-          <div class="song-actions">
-            <button class="btn-small" onclick="viewLyrics(${keyForActions})">歌詞</button>
-            ${
-              song.youtubeUrl
-                ? `<button class="btn-small" onclick="viewYoutube(${keyForActions})">▶️</button>`
-                : ''
-            }
-            ${
-              song.sheetUrl
-                ? `<button class="btn-small" onclick="viewSheet(${keyForActions})">📄</button>`
-                : ''
-            }
-            <button class="btn-small" onclick="editSong(${keyForActions})">編輯</button>
-            <button class="btn-small btn-delete" onclick="deleteSong(${keyForActions})">刪除</button>
-          </div>
+    return `
+      <div id="song-${domId}" class="song-card ${song.category}">
+        <div class="song-category-badge ${song.category}">
+          ${categoryLabels[song.category] || song.category}
         </div>
-      `;
-    })
-    .join('');
+        <h3 class="song-title">${escapeHtml(song.title || '')}</h3>
+        <p class="song-artist">🎤 ${escapeHtml(song.artist || '')}</p>
+        ${song.note ? `<p class="song-note">📝 ${escapeHtml(song.note)}</p>` : ''}
+        <div class="song-actions">
+          <button class="btn-small" onclick="viewLyrics(${keyForActions})">歌詞</button>
+          ${song.youtubeUrl ? `<button class="btn-small" onclick="viewYoutube(${keyForActions})">▶️</button>` : ''}
+          ${song.sheetUrl ? `<button class="btn-small" onclick="viewSheet(${keyForActions})">📄</button>` : ''}
+          <button class="btn-small" onclick="editSong(${keyForActions})">編輯</button>
+          <button class="btn-small btn-delete" onclick="deleteSong(${keyForActions})">刪除</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// 抽出來重複用的空狀態
+function emptyStateHtml(filter) {
+  return `
+    <div class="empty-state">
+      <div class="empty-state-icon">🎶</div>
+      <p>${filter === 'all' ? '還沒有新增歌曲。' : `此分類中還沒有歌曲。`}<br>開始新增你的敬拜歌曲吧！</p>
+    </div>
+  `;
 }
 
 
@@ -1009,15 +1007,30 @@
         }
 
         async function loadSongsFromDb() {
-            try {
-                const response = await fetch(`${DB_API}/songs.json`);
-                const data = await response.json();
-                return data || [];
-            } catch (e) {
-                console.error('Load failed:', e);
-                return [];
-            }
-        }
+  try {
+    const res = await fetch(`${DB_BASE}/songs.json`);
+    if (!res.ok) throw new Error('Failed to load');
+    
+    const rawData = await res.json();
+    
+    // 重要：轉換成陣列格式
+    if (rawData) {
+      songs = Object.entries(rawData).map(([recordKey, songData]) => ({
+        recordKey,
+        ...songData
+      }));
+    } else {
+      songs = [];
+    }
+    
+    renderSongs();
+  } catch (error) {
+    console.error('Load songs error:', error);
+    songs = [];
+    renderSongs();
+  }
+}
+
 
         async function deleteSongFromDb(id) {
             try {
