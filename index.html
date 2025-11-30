@@ -557,7 +557,17 @@
 
                 <div class="form-group">
                     <label for="songLyrics">歌詞</label>
-                    <textarea id="songLyrics" placeholder="輸入歌詞（可選）" rows="6"></textarea>
+                    <textarea id="songLyrics" placeholder="輸入歌詞（可選）" rows="4"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="songYoutubeUrl">YouTube 連結</label>
+                    <input type="text" id="songYoutubeUrl" placeholder="例: https://www.youtube.com/watch?v=...">
+                </div>
+
+                <div class="form-group">
+                    <label for="songSheetUrl">歌譜連結</label>
+                    <input type="text" id="songSheetUrl" placeholder="例: https://example.com/sheet.pdf">
                 </div>
 
                 <div class="button-group">
@@ -663,7 +673,9 @@
                 artist: artist || '未知藝術家',
                 category: category,
                 note: note,
-                lyrics: document.getElementById('songLyrics').value.trim()
+                lyrics: document.getElementById('songLyrics').value.trim(),
+                youtubeUrl: document.getElementById('songYoutubeUrl').value.trim(),
+                sheetUrl: document.getElementById('songSheetUrl').value.trim()
             };
 
             songs.push(song);
@@ -678,6 +690,8 @@
             document.getElementById('songCategory').value = '';
             document.getElementById('songNote').value = '';
             document.getElementById('songLyrics').value = '';
+            document.getElementById('songYoutubeUrl').value = '';
+            document.getElementById('songSheetUrl').value = '';
             document.getElementById('songTitle').focus();
         }
 
@@ -727,6 +741,8 @@
                     ${song.note ? `<p class="song-note">📝 ${escapeHtml(song.note)}</p>` : ''}
                     <div class="song-actions">
                         <button class="btn-small" onclick="viewLyrics(${song.id})">歌詞</button>
+                        ${song.youtubeUrl ? `<button class="btn-small" onclick="viewYoutube(${song.id})">▶️</button>` : ''}
+                        ${song.sheetUrl ? `<button class="btn-small" onclick="viewSheet(${song.id})">📄</button>` : ''}
                         <button class="btn-small" onclick="editSong(${song.id})">編輯</button>
                         <button class="btn-small btn-delete" onclick="deleteSong(${song.id})">刪除</button>
                     </div>
@@ -757,6 +773,18 @@
             document.getElementById('lyricsModal').style.display = 'none';
         }
 
+        function viewYoutube(id) {
+            const song = songs.find(s => s.id === id);
+            if (!song || !song.youtubeUrl) return;
+            window.open(song.youtubeUrl, '_blank');
+        }
+
+        function viewSheet(id) {
+            const song = songs.find(s => s.id === id);
+            if (!song || !song.sheetUrl) return;
+            window.open(song.sheetUrl, '_blank');
+        }
+
         window.onclick = function(event) {
             const modal = document.getElementById('lyricsModal');
             if (event.target === modal) {
@@ -773,6 +801,8 @@
             document.getElementById('songCategory').value = song.category;
             document.getElementById('songNote').value = song.note;
             document.getElementById('songLyrics').value = song.lyrics || '';
+            document.getElementById('songYoutubeUrl').value = song.youtubeUrl || '';
+            document.getElementById('songSheetUrl').value = song.sheetUrl || '';
 
             deleteSong(id);
             document.getElementById('songTitle').focus();
@@ -843,13 +873,18 @@
             let csvContent = '\uFEFF'; // BOM for UTF-8
             csvContent += ['歌曲名稱', '藝術家', '分類', '備註', '歌詞'].join(',') + '\r\n';
             
+            let csvContent = '\uFEFF'; // BOM for UTF-8
+            csvContent += ['歌曲名稱', '藝術家', '分類', '備註', '歌詞', 'YouTube', '歌譜'].join(',') + '\r\n';
+            
             songs.forEach(song => {
                 const row = [
                     `"${(song.title || '').replace(/"/g, '""')}"`,
                     `"${(song.artist || '').replace(/"/g, '""')}"`,
                     `"${categoryLabels[song.category] || ''}"`,
                     `"${(song.note || '').replace(/"/g, '""')}"`,
-                    `"${(song.lyrics || '').replace(/"/g, '""')}"`
+                    `"${(song.lyrics || '').replace(/"/g, '""')}"`,
+                    `"${(song.youtubeUrl || '').replace(/"/g, '""')}"`,
+                    `"${(song.sheetUrl || '').replace(/"/g, '""')}"`
                 ].join(',');
                 csvContent += row + '\r\n';
             });
@@ -930,13 +965,13 @@
             }
         }
 
-        // Firebase Realtime Database setup
-        const DB_URL = 'https://crcfl-worship-music-selector-default-rtdb.asia-southeast1.firebasedatabase.app';
+        // Database setup using Firebase/Supabase
+        const DB_API = 'https://crcfl-worship-music-selector-default-rtdb.asia-southeast1.firebasedatabase.app';
 
         async function saveSongToDb(song) {
             try {
-                const response = await fetch(`${DB_URL}/songs/${song.id}.json`, {
-                    method: 'PUT',
+                const response = await fetch(`${DB_API}/songs`, {
+                    method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(song)
                 });
@@ -949,11 +984,9 @@
 
         async function loadSongsFromDb() {
             try {
-                const response = await fetch(`${DB_URL}/songs.json`);
-                if (!response.ok) throw new Error('Failed to fetch');
+                const response = await fetch(`${DB_API}/songs`);
                 const data = await response.json();
-                if (!data) return [];
-                return Object.values(data);
+                return data.songs || [];
             } catch (e) {
                 console.error('Load failed:', e);
                 return [];
@@ -962,7 +995,7 @@
 
         async function deleteSongFromDb(id) {
             try {
-                await fetch(`${DB_URL}/songs/${id}.json`, { method: 'DELETE' });
+                await fetch(`${DB_API}/songs/${id}`, { method: 'DELETE' });
             } catch (e) {
                 console.error('Delete failed:', e);
             }
@@ -989,7 +1022,7 @@
 
         // Initialize
         loadSongsFromDb().then(dbSongs => {
-            songs = dbSongs.length > 0 ? dbSongs : [];
+            songs = dbSongs;
             loadFromShareLink();
             renderSongs();
             updateStats();
