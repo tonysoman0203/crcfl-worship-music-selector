@@ -732,7 +732,7 @@
             }
 
             container.innerHTML = filteredSongs.map(song => `
-                <div class="song-card ${song.category}">
+                <div id="song-${song.id}" class="song-card ${song.category}">
                     <div class="song-category-badge ${song.category}">
                         ${categoryLabels[song.category]}
                     </div>
