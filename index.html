@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>敬拜音樂選擇器</title>
+    <style>
+        :root {
+            --color-bg-primary: #faf8f3;
+            --color-surface: #ffffff;
+            --color-text-primary: #1a1a1a;
+            --color-text-secondary: #666666;
+            --color-primary: #2180f3;
+            --color-primary-hover: #1a68d9;
+            --color-primary-active: #1554c0;
+            --color-border: #e0e0e0;
+            --color-error: #d9433a;
+            --color-success: #2da465;
+            --color-worship: #8b6f47;
+            --color-pray: #5dade2;
+            --color-thanks: #f39c12;
+            --color-response: #e74c3c;
+            --radius-base: 8px;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--color-bg-primary);
+            color: var(--color-text-primary);
+            margin: 0;
+            padding: 20px;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-size: 32px;
+            margin: 0 0 10px 0;
+            color: var(--color-worship);
+        }
+
+        .subtitle {
+            color: var(--color-text-secondary);
+            font-size: 14px;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .form-panel {
+            background: var(--color-surface);
+            padding: 24px;
+            border-radius: var(--radius-base);
+            box-shadow: var(--shadow-sm);
+            height: fit-content;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+            color: var(--color-text-secondary);
+        }
+
+        input[type="text"],
+        select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--color-border);
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+
+        input[type="text"]:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px rgba(33, 128, 243, 0.1);
+        }
+
+        select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23666666' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            padding-right: 32px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex: 1;
+        }
+
+        .btn-primary {
+            background: var(--color-primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--color-primary-hover);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: var(--color-text-primary);
+            border: 1px solid var(--color-border);
+        }
+
+        .btn-secondary:hover {
+            background: #e8e8e8;
+        }
+
+        .category-filters {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .category-btn {
+            padding: 10px 16px;
+            border: 2px solid transparent;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+            background: white;
+            color: var(--color-text-primary);
+        }
+
+        .category-btn.worship {
+            border-color: var(--color-worship);
+            background: rgba(139, 111, 71, 0.05);
+            color: var(--color-worship);
+        }
+
+        .category-btn.pray {
+            border-color: var(--color-pray);
+            background: rgba(93, 173, 226, 0.05);
+            color: var(--color-pray);
+        }
+
+        .category-btn.thanks {
+            border-color: var(--color-thanks);
+            background: rgba(243, 156, 18, 0.05);
+            color: var(--color-thanks);
+        }
+
+        .category-btn.response {
+            border-color: var(--color-response);
+            background: rgba(231, 76, 60, 0.05);
+            color: var(--color-response);
+        }
+
+        .category-btn.active {
+            background: var(--color-primary);
+            color: white;
+            border-color: var(--color-primary);
+        }
+
+        .songs-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .songs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
+        }
+
+        .song-card {
+            background: var(--color-surface);
+            border-radius: var(--radius-base);
+            padding: 16px;
+            box-shadow: var(--shadow-sm);
+            border-left: 4px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .song-card.worship {
+            border-left-color: var(--color-worship);
+        }
+
+        .song-card.pray {
+            border-left-color: var(--color-pray);
+        }
+
+        .song-card.thanks {
+            border-left-color: var(--color-thanks);
+        }
+
+        .song-card.response {
+            border-left-color: var(--color-response);
+        }
+
+        .song-card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+
+        .song-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin: 0 0 8px 0;
+            color: var(--color-text-primary);
+        }
+
+        .song-artist {
+            font-size: 13px;
+            color: var(--color-text-secondary);
+            margin: 0 0 12px 0;
+        }
+
+        .song-category-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            margin-bottom: 12px;
+        }
+
+        .song-category-badge.worship {
+            background: rgba(139, 111, 71, 0.15);
+            color: var(--color-worship);
+        }
+
+        .song-category-badge.pray {
+            background: rgba(93, 173, 226, 0.15);
+            color: var(--color-pray);
+        }
+
+        .song-category-badge.thanks {
+            background: rgba(243, 156, 18, 0.15);
+            color: var(--color-thanks);
+        }
+
+        .song-category-badge.response {
+            background: rgba(231, 76, 60, 0.15);
+            color: var(--color-response);
+        }
+
+        .song-note {
+            font-size: 12px;
+            color: var(--color-text-secondary);
+            margin-bottom: 12px;
+            line-height: 1.4;
+        }
+
+        .song-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 12px;
+            border: 1px solid var(--color-border);
+            border-radius: 4px;
+            background: #f8f8f8;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex: 1;
+        }
+
+        .btn-small:hover {
+            background: var(--color-primary);
+            color: white;
+            border-color: var(--color-primary);
+        }
+
+        .btn-delete {
+            background: #fff3f3;
+            color: var(--color-error);
+            border-color: #ffcccc;
+        }
+
+        .btn-delete:hover {
+            background: var(--color-error);
+            color: white;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.2s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            background-color: var(--color-surface);
+            margin: 5% auto;
+            padding: 24px;
+            border-radius: var(--radius-base);
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow-md);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--color-border);
+            padding-bottom: 16px;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: 20px;
+        }
+
+        .modal-close {
+            font-size: 28px;
+            font-weight: bold;
+            color: var(--color-text-secondary);
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+
+        .modal-close:hover {
+            background: var(--color-secondary);
+            color: var(--color-text-primary);
+        }
+
+        .lyrics-display {
+            background: #f9f9f9;
+            padding: 16px;
+            border-radius: 6px;
+            border: 1px solid var(--color-border);
+            line-height: 1.8;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            color: var(--color-text-primary);
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .lyrics-display.empty {
+            color: var(--color-text-secondary);
+            font-style: italic;
+            text-align: center;
+        }
+
+        .stats {
+            background: var(--color-surface);
+            padding: 20px;
+            border-radius: var(--radius-base);
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 16px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--color-text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--color-text-secondary);
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .data-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid var(--color-border);
+        }
+
+        .data-actions .btn-secondary {
+            flex: 1;
+        }
+
+        .input-file {
+            display: none;
+        }
+
+        .share-section {
+            background: rgba(33, 180, 243, 0.05);
+            border: 1px solid rgba(33, 180, 243, 0.2);
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 12px;
+            font-size: 12px;
+        }
+
+        .share-input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--color-border);
+            border-radius: 4px;
+            font-size: 12px;
+            margin-bottom: 8px;
+            font-family: monospace;
+        }
+
+        .share-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .share-buttons button {
+            flex: 1;
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+
+            .songs-grid {
+                grid-template-columns: 1fr;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .data-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎵 敬拜音樂選擇器</h1>
+            <p class="subtitle">組織和管理敬拜音樂</p>
+        </header>
+
+        <div class="main-content">
+            <!-- Form Panel -->
+            <div class="form-panel">
+                <h3 style="margin-top: 0; margin-bottom: 20px;">新增歌曲</h3>
+
+                <div class="form-group">
+                    <label for="songTitle">歌曲名稱</label>
+                    <input type="text" id="songTitle" placeholder="輸入歌曲名稱">
+                </div>
+
+                <div class="form-group">
+                    <label for="songArtist">藝術家</label>
+                    <input type="text" id="songArtist" placeholder="輸入藝術家名稱">
+                </div>
+
+                <div class="form-group">
+                    <label for="songCategory">敬拜分類</label>
+                    <select id="songCategory">
+                        <option value="">-- 選擇分類 --</option>
+                        <option value="worship">敬拜</option>
+                        <option value="pray">祈禱</option>
+                        <option value="thanks">感謝</option>
+                        <option value="response">回應</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="songNote">備註</label>
+                    <input type="text" id="songNote" placeholder="例: 適合主日、特別節期等">
+                </div>
+
+                <div class="form-group">
+                    <label for="songLyrics">歌詞</label>
+                    <textarea id="songLyrics" placeholder="輸入歌詞（可選）" rows="6"></textarea>
+                </div>
+
+                <div class="button-group">
+                    <button class="btn-primary" onclick="addSong()">新增歌曲</button>
+                    <button class="btn-secondary" onclick="clearForm()">清空</button>
+                </div>
+
+                <hr style="margin: 24px 0; border: none; border-top: 1px solid var(--color-border);">
+
+                <h3 style="margin-top: 0; margin-bottom: 16px;">依分類篩選</h3>
+                <div class="category-filters">
+                    <button class="category-btn" onclick="filterCategory('all', this)">全部歌曲</button>
+                    <button class="category-btn worship" onclick="filterCategory('worship', this)">敬拜</button>
+                    <button class="category-btn pray" onclick="filterCategory('pray', this)">祈禱</button>
+                    <button class="category-btn thanks" onclick="filterCategory('thanks', this)">感謝</button>
+                    <button class="category-btn response" onclick="filterCategory('response', this)">回應</button>
+                </div>
+
+                <div class="data-actions">
+                    <button class="btn-secondary" onclick="exportData()">📥 匯出 JSON</button>
+                    <button class="btn-secondary" onclick="exportToExcel()">📊 匯出 Excel</button>
+                    <button class="btn-secondary" onclick="document.getElementById('fileInput').click()">📤 匯入</button>
+                    <button class="btn-secondary" onclick="shareData()">🔗 分享</button>
+                </div>
+
+                <div id="shareSection" class="share-section" style="display: none;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600;">分享連結：</label>
+                    <input type="text" id="shareLink" class="share-input" readonly>
+                    <div class="share-buttons">
+                        <button class="btn-primary" onclick="copyLink()">複製</button>
+                        <button class="btn-secondary" onclick="document.getElementById('shareSection').style.display='none'">關閉</button>
+                    </div>
+                </div>
+
+                <input type="file" id="fileInput" class="input-file" accept=".json" onchange="importData(event)">
+            </div>
+
+            <!-- Songs Display -->
+            <div class="songs-panel">
+                <div class="stats" id="statsContainer">
+                    <div class="stat-item">
+                        <div class="stat-number" id="totalCount">0</div>
+                        <div class="stat-label">全部歌曲</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="worshipCount">0</div>
+                        <div class="stat-label">敬拜</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="prayCount">0</div>
+                        <div class="stat-label">祈禱</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="thanksCount">0</div>
+                        <div class="stat-label">感謝</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="responseCount">0</div>
+                        <div class="stat-label">回應</div>
+                    </div>
+                </div>
+
+                <div class="songs-grid" id="songsContainer">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🎶</div>
+                        <p>還沒有新增歌曲。<br>從左邊表格開始新增你的敬拜歌曲吧！</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let songs = [];
+        let currentFilter = 'all';
+
+        const categoryLabels = {
+            'worship': '敬拜',
+            'pray': '祈禱',
+            'thanks': '感謝',
+            'response': '回應'
+        };
+
+        function addSong() {
+            const title = document.getElementById('songTitle').value.trim();
+            const artist = document.getElementById('songArtist').value.trim();
+            const category = document.getElementById('songCategory').value;
+            const note = document.getElementById('songNote').value.trim();
+
+            if (!title) {
+                alert('請輸入歌曲名稱');
+                return;
+            }
+
+            if (!category) {
+                alert('請選擇敬拜分類');
+                return;
+            }
+
+            const song = {
+                id: Date.now(),
+                title: title,
+                artist: artist || '未知藝術家',
+                category: category,
+                note: note,
+                lyrics: document.getElementById('songLyrics').value.trim()
+            };
+
+            songs.push(song);
+            clearForm();
+            renderSongs();
+            updateStats();
+        }
+
+        function clearForm() {
+            document.getElementById('songTitle').value = '';
+            document.getElementById('songArtist').value = '';
+            document.getElementById('songCategory').value = '';
+            document.getElementById('songNote').value = '';
+            document.getElementById('songLyrics').value = '';
+            document.getElementById('songTitle').focus();
+        }
+
+        function deleteSong(id) {
+            if (confirm('確定要刪除這首歌曲嗎？')) {
+                songs = songs.filter(song => song.id !== id);
+                renderSongs();
+                updateStats();
+            }
+        }
+
+        function filterCategory(category, btn) {
+            currentFilter = category;
+
+            // Update active button
+            document.querySelectorAll('.category-btn').forEach(button => {
+                button.classList.remove('active');
+            });
+            btn.classList.add('active');
+
+            renderSongs();
+        }
+
+        function renderSongs() {
+            const container = document.getElementById('songsContainer');
+            const filteredSongs = currentFilter === 'all' 
+                ? songs 
+                : songs.filter(song => song.category === currentFilter);
+
+            if (filteredSongs.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🎶</div>
+                        <p>${currentFilter === 'all' ? '還沒有新增歌曲。' : `此分類中還沒有歌曲。`}<br>開始新增你的敬拜歌曲吧！</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = filteredSongs.map(song => `
+                <div class="song-card ${song.category}">
+                    <div class="song-category-badge ${song.category}">
+                        ${categoryLabels[song.category]}
+                    </div>
+                    <h3 class="song-title">${escapeHtml(song.title)}</h3>
+                    <p class="song-artist">🎤 ${escapeHtml(song.artist)}</p>
+                    ${song.note ? `<p class="song-note">📝 ${escapeHtml(song.note)}</p>` : ''}
+                    <div class="song-actions">
+                        <button class="btn-small" onclick="viewLyrics(${song.id})">歌詞</button>
+                        <button class="btn-small" onclick="editSong(${song.id})">編輯</button>
+                        <button class="btn-small btn-delete" onclick="deleteSong(${song.id})">刪除</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function viewLyrics(id) {
+            const song = songs.find(s => s.id === id);
+            if (!song) return;
+
+            const modal = document.getElementById('lyricsModal');
+            document.getElementById('modalTitle').textContent = escapeHtml(song.title) + ' - ' + escapeHtml(song.artist);
+            const lyricsContainer = document.getElementById('lyricsContent');
+            
+            if (song.lyrics) {
+                lyricsContainer.textContent = song.lyrics;
+                lyricsContainer.classList.remove('empty');
+            } else {
+                lyricsContainer.textContent = '此歌曲尚無歌詞';
+                lyricsContainer.classList.add('empty');
+            }
+            
+            modal.style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('lyricsModal').style.display = 'none';
+        }
+
+        window.onclick = function(event) {
+            const modal = document.getElementById('lyricsModal');
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        function editSong(id) {
+            const song = songs.find(s => s.id === id);
+            if (!song) return;
+
+            document.getElementById('songTitle').value = song.title;
+            document.getElementById('songArtist').value = song.artist;
+            document.getElementById('songCategory').value = song.category;
+            document.getElementById('songNote').value = song.note;
+            document.getElementById('songLyrics').value = song.lyrics || '';
+
+            deleteSong(id);
+            document.getElementById('songTitle').focus();
+        }
+
+        function updateStats() {
+            const total = songs.length;
+            const worship = songs.filter(s => s.category === 'worship').length;
+            const pray = songs.filter(s => s.category === 'pray').length;
+            const thanks = songs.filter(s => s.category === 'thanks').length;
+            const response = songs.filter(s => s.category === 'response').length;
+
+            document.getElementById('totalCount').textContent = total;
+            document.getElementById('worshipCount').textContent = worship;
+            document.getElementById('prayCount').textContent = pray;
+            document.getElementById('thanksCount').textContent = thanks;
+            document.getElementById('responseCount').textContent = response;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function saveSongsToStorage() {
+            localStorage.setItem('worshipSongs', JSON.stringify(songs));
+        }
+
+        function loadSongsFromStorage() {
+            const saved = localStorage.getItem('worshipSongs');
+            if (saved) {
+                try {
+                    songs = JSON.parse(saved);
+                } catch (e) {
+                    console.error('Failed to load songs:', e);
+                }
+            }
+        }
+
+        function exportData() {
+            const dataStr = JSON.stringify({
+                version: 1,
+                exportDate: new Date().toISOString(),
+                songs: songs
+            }, null, 2);
+            
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `worship-songs-${new Date().getTime()}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            alert('✅ JSON 檔案已成功匯出！');
+        }
+
+        function exportToExcel() {
+            if (songs.length === 0) {
+                alert('❌ 沒有歌曲可匯出');
+                return;
+            }
+
+            // Create CSV content
+            let csvContent = '\uFEFF'; // BOM for UTF-8
+            csvContent += ['歌曲名稱', '藝術家', '分類', '備註', '歌詞'].join(',') + '\r\n';
+            
+            songs.forEach(song => {
+                const row = [
+                    `"${(song.title || '').replace(/"/g, '""')}"`,
+                    `"${(song.artist || '').replace(/"/g, '""')}"`,
+                    `"${categoryLabels[song.category] || ''}"`,
+                    `"${(song.note || '').replace(/"/g, '""')}"`,
+                    `"${(song.lyrics || '').replace(/"/g, '""')}"`
+                ].join(',');
+                csvContent += row + '\r\n';
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `worship-songs-${new Date().getTime()}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            alert('✅ Excel (CSV) 檔案已成功匯出！');
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (data.songs && Array.isArray(data.songs)) {
+                        if (confirm('匯入會覆蓋現有歌曲。是否繼續？')) {
+                            songs = data.songs;
+                            saveSongsToStorage();
+                            renderSongs();
+                            updateStats();
+                            alert('✅ 歌曲已成功匯入！');
+                        }
+                    } else {
+                        alert('❌ 檔案格式不正確');
+                    }
+                } catch (error) {
+                    alert('❌ 匯入失敗：' + error.message);
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        function shareData() {
+            const shareData = btoa(JSON.stringify(songs));
+            const baseUrl = window.location.origin + window.location.pathname;
+            const shareLink = baseUrl + '?data=' + shareData;
+            
+            document.getElementById('shareLink').value = shareLink;
+            document.getElementById('shareSection').style.display = 'block';
+        }
+
+        function copyLink() {
+            const shareLink = document.getElementById('shareLink');
+            shareLink.select();
+            document.execCommand('copy');
+            alert('✅ 連結已複製到剪貼板！');
+        }
+
+        function loadFromShareLink() {
+            const params = new URLSearchParams(window.location.search);
+            const data = params.get('data');
+            
+            if (data) {
+                try {
+                    const decoded = JSON.parse(atob(data));
+                    if (Array.isArray(decoded) && confirm('要載入分享的歌曲嗎？')) {
+                        songs = decoded;
+                        saveSongsToStorage();
+                        renderSongs();
+                        updateStats();
+                        window.history.replaceState({}, document.title, window.location.pathname);
+                    }
+                } catch (e) {
+                    console.error('Failed to load share data:', e);
+                }
+            }
+        }
+
+        // Database setup using Firebase/Supabase
+        const DB_API = 'https://worship-db.vercel.app/api'; // Backend API endpoint
+
+        async function saveSongToDb(song) {
+            try {
+                const response = await fetch(`${DB_API}/songs`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(song)
+                });
+                return await response.json();
+            } catch (e) {
+                console.error('Save failed:', e);
+                return null;
+            }
+        }
+
+        async function loadSongsFromDb() {
+            try {
+                const response = await fetch(`${DB_API}/songs`);
+                const data = await response.json();
+                return data.songs || [];
+            } catch (e) {
+                console.error('Load failed:', e);
+                return [];
+            }
+        }
+
+        async function deleteSongFromDb(id) {
+            try {
+                await fetch(`${DB_API}/songs/${id}`, { method: 'DELETE' });
+            } catch (e) {
+                console.error('Delete failed:', e);
+            }
+        }
+
+        // Hook addSong to save to database
+        const originalAddSong = addSong;
+        addSong = function() {
+            originalAddSong.call(this);
+            const lastSong = songs[songs.length - 1];
+            saveSongToDb(lastSong);
+        }
+
+        // Hook deleteSong to save to database
+        const originalDeleteSong = deleteSong;
+        deleteSong = function(id) {
+            if (confirm('確定要刪除這首歌曲嗎？')) {
+                songs = songs.filter(song => song.id !== id);
+                deleteSongFromDb(id);
+                renderSongs();
+                updateStats();
+            }
+        }
+
+        // Initialize
+        loadSongsFromDb().then(dbSongs => {
+            songs = dbSongs;
+            loadFromShareLink();
+            renderSongs();
+            updateStats();
+        });
+    </script>
+
+    <!-- Lyrics Modal -->
+    <div id="lyricsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">歌詞</h2>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div id="lyricsContent" class="lyrics-display"></div>
+        </div>
+    </div>
+</body>
+</html>
