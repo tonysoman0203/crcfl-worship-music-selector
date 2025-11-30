@@ -930,13 +930,13 @@
             }
         }
 
-        // Database setup using Firebase/Supabase
-        const DB_URL = 'https://crcfl-worship-music-selector-default-rtdb.asia-southeast1.firebasedatabase.app';
+        // Firebase Realtime Database setup
+        const DB_URL = 'https://crcfl-worship-music-selector.firebaseio.com';
 
         async function saveSongToDb(song) {
             try {
-                const response = await fetch(`${DB_URL}/songs`, {
-                    method: 'POST',
+                const response = await fetch(`${DB_URL}/songs/${song.id}.json`, {
+                    method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(song)
                 });
@@ -949,9 +949,11 @@
 
         async function loadSongsFromDb() {
             try {
-                const response = await fetch(`${DB_URL}/songs`);
+                const response = await fetch(`${DB_URL}/songs.json`);
+                if (!response.ok) throw new Error('Failed to fetch');
                 const data = await response.json();
-                return data.songs || [];
+                if (!data) return [];
+                return Object.values(data);
             } catch (e) {
                 console.error('Load failed:', e);
                 return [];
@@ -960,7 +962,7 @@
 
         async function deleteSongFromDb(id) {
             try {
-                await fetch(`${DB_URL}/songs/${id}`, { method: 'DELETE' });
+                await fetch(`${DB_URL}/songs/${id}.json`, { method: 'DELETE' });
             } catch (e) {
                 console.error('Delete failed:', e);
             }
@@ -987,7 +989,7 @@
 
         // Initialize
         loadSongsFromDb().then(dbSongs => {
-            songs = dbSongs;
+            songs = dbSongs.length > 0 ? dbSongs : [];
             loadFromShareLink();
             renderSongs();
             updateStats();
