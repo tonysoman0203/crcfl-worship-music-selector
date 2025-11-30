@@ -641,15 +641,27 @@
     </div>
 
     <script>
+       // 全域變數初始化
         let songs = [];
         let currentFilter = 'all';
-
         const categoryLabels = {
-            'worship': '敬拜',
-            'pray': '祈禱',
-            'thanks': '感謝',
-            'response': '回應'
+        worship: '敬拜',
+        pray: '祈禱', 
+        thanks: '感謝',
+        response: '回應'
         };
+
+        // 確保 escapeHtml 函數存在
+        function escapeHtml(text) {
+        const map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        };
+        return text.replace(/[&<>"']/g, m => map[m]);
+        }
 
         function addSong() {
             const title = document.getElementById('songTitle').value.trim();
@@ -715,57 +727,69 @@
             renderSongs();
         }
 
-        function renderSongs() {
+       function renderSongs() {
   const container = document.getElementById('songsContainer');
   
-  // 1. 確保 songs 是陣列，不是 Firebase 原始物件
-  if (!Array.isArray(songs)) {
-    if (!songs) {
-      container.innerHTML = emptyStateHtml('all');
-      return;
-    }
-    // 從 Firebase 物件轉陣列
-    songs = Object.entries(songs).map(([recordKey, songData]) => ({
+  // 1. 確保 songs 存在且是陣列
+  let safeSongs = [];
+  if (Array.isArray(songs)) {
+    safeSongs = songs;
+  } else if (songs && typeof songs === 'object') {
+    // Firebase 原始物件轉陣列
+    safeSongs = Object.entries(songs).map(([recordKey, songData]) => ({
       recordKey,
       ...songData
     }));
   }
+  // songs 是 null/undefined/false，直接空陣列
 
-  // 2. 過濾歌曲
+  // 2. 安全過濾
   const filteredSongs = currentFilter === 'all' 
-    ? songs 
-    : songs.filter(song => song.category === currentFilter);
+    ? safeSongs 
+    : safeSongs.filter(song => song && song.category === currentFilter);
 
-  // 3. 檢查是否為陣列且有資料
+  // 3. 檢查長度前先確認是陣列
   if (!Array.isArray(filteredSongs) || filteredSongs.length === 0) {
-    container.innerHTML = emptyStateHtml(currentFilter);
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon">🎶</div>
+        <p>${currentFilter === 'all' ? '還沒有新增歌曲。' : `此分類中還沒有歌曲。`}<br>開始新增你的敬拜歌曲吧！</p>
+      </div>
+    `;
     return;
   }
 
-  // 4. 渲染卡片
-  container.innerHTML = filteredSongs.map(song => {
-    const domId = song.recordKey || song.id;
-    const keyForActions = JSON.stringify(song.recordKey || song.id);
+  // 4. 安全渲染
+  container.innerHTML = filteredSongs
+    .map(song => {
+      // 雙重防呆：確保 song 存在且有必要欄位
+      if (!song) return '';
+      
+      const domId = song.recordKey || song.id || 'unknown';
+      const safeKey = JSON.stringify(song.recordKey || song.id || 'unknown');
 
-    return `
-      <div id="song-${domId}" class="song-card ${song.category}">
-        <div class="song-category-badge ${song.category}">
-          ${categoryLabels[song.category] || song.category}
+      return `
+        <div id="song-${domId}" class="song-card ${song.category || 'unknown'}">
+          <div class="song-category-badge ${song.category || 'unknown'}">
+            ${categoryLabels[song.category] || song.category || '未知'}
+          </div>
+          <h3 class="song-title">${escapeHtml(song.title || '無標題')}</h3>
+          <p class="song-artist">🎤 ${escapeHtml(song.artist || '未知藝術家')}</p>
+          ${song.note ? `<p class="song-note">📝 ${escapeHtml(song.note)}</p>` : ''}
+          <div class="song-actions">
+            <button class="btn-small" onclick="viewLyrics(${safeKey})">歌詞</button>
+            ${song.youtubeUrl ? `<button class="btn-small" onclick="viewYoutube(${safeKey})">▶️</button>` : ''}
+            ${song.sheetUrl ? `<button class="btn-small" onclick="viewSheet(${safeKey})">📄</button>` : ''}
+            <button class="btn-small" onclick="editSong(${safeKey})">編輯</button>
+            <button class="btn-small btn-delete" onclick="deleteSong(${safeKey})">刪除</button>
+          </div>
         </div>
-        <h3 class="song-title">${escapeHtml(song.title || '')}</h3>
-        <p class="song-artist">🎤 ${escapeHtml(song.artist || '')}</p>
-        ${song.note ? `<p class="song-note">📝 ${escapeHtml(song.note)}</p>` : ''}
-        <div class="song-actions">
-          <button class="btn-small" onclick="viewLyrics(${keyForActions})">歌詞</button>
-          ${song.youtubeUrl ? `<button class="btn-small" onclick="viewYoutube(${keyForActions})">▶️</button>` : ''}
-          ${song.sheetUrl ? `<button class="btn-small" onclick="viewSheet(${keyForActions})">📄</button>` : ''}
-          <button class="btn-small" onclick="editSong(${keyForActions})">編輯</button>
-          <button class="btn-small btn-delete" onclick="deleteSong(${keyForActions})">刪除</button>
-        </div>
-      </div>
-    `;
-  }).join('');
+      `;
+    })
+    .filter(html => html !== '')  // 過濾掉空項目
+    .join('');
 }
+
 
 // 抽出來重複用的空狀態
 function emptyStateHtml(filter) {
@@ -1008,12 +1032,16 @@ function emptyStateHtml(filter) {
 
         async function loadSongsFromDb() {
   try {
-    const res = await fetch(`${DB_API}/songs.json`);
-    if (!res.ok) throw new Error('Failed to load');
+    const res = await fetch(`${DB_BASE}/songs.json`);
+    if (!res.ok) {
+      console.warn('No songs found or DB error:', res.status);
+      songs = [];
+      renderSongs();
+      return;
+    }
     
     const rawData = await res.json();
     
-    // 重要：轉換成陣列格式
     if (rawData) {
       songs = Object.entries(rawData).map(([recordKey, songData]) => ({
         recordKey,
@@ -1026,7 +1054,7 @@ function emptyStateHtml(filter) {
     renderSongs();
   } catch (error) {
     console.error('Load songs error:', error);
-    songs = [];
+    songs = [];  // 重置為空陣列
     renderSongs();
   }
 }
@@ -1066,6 +1094,12 @@ function emptyStateHtml(filter) {
             renderSongs();
             updateStats();
         });
+
+        document.addEventListener('DOMContentLoaded', () => {
+  loadSongsFromDb();  // 先從 DB 載入
+  renderSongs();      // 顯示空狀態或資料
+});
+
     </script>
 
     <!-- Lyrics Modal -->
