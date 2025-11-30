@@ -869,10 +869,6 @@
                 return;
             }
 
-            // Create CSV content
-            let csvContent = '\uFEFF'; // BOM for UTF-8
-            csvContent += ['歌曲名稱', '藝術家', '分類', '備註', '歌詞'].join(',') + '\r\n';
-            
             let csvContent = '\uFEFF'; // BOM for UTF-8
             csvContent += ['歌曲名稱', '藝術家', '分類', '備註', '歌詞', 'YouTube', '歌譜'].join(',') + '\r\n';
             
