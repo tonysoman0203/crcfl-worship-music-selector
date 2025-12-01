@@ -5,7 +5,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>敬拜音樂選擇器</title>
-    <link rel="stylesheet" href="https://unpkg.com/intro.js/minified/introjs.min.css">
     <style>
         :root {
             --color-bg-primary: #faf8f3;
@@ -18,10 +17,16 @@
             --color-border: #e0e0e0;
             --color-error: #d9433a;
             --color-success: #2da465;
-            --color-worship: #8b6f47;
-            --color-pray: #5dade2;
-            --color-thanks: #f39c12;
-            --color-response: #e74c3c;
+            /* 更新分類顏色 */
+            --color-praise: #e67e22;      /* 讚美 - 橙 */
+            --color-worship: #8b6f47;      /* 敬拜 - 棕 */
+            --color-prayer: #3498db;       /* 祈求 - 藍 */
+            --color-thanks: #f39c12;       /* 信靠/感謝 - 黃 */
+            --color-response: #e74c3c;     /* 回應 - 紅 */
+            --color-advent: #9b59b6;       /* 將臨期 - 紫 */
+            --color-christmas: #27ae60;    /* 聖誕節 - 綠 */
+            --color-lent: #34495e;         /* 預苦期 - 深灰 */
+            --color-resurrection: #f1c40f; /* 復活節 - 金黃 */
             --radius-base: 8px;
             --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
             --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -151,12 +156,6 @@
             background: #e8e8e8;
         }
 
-        .category-filters {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
         .category-btn {
             padding: 10px 16px;
             border: 2px solid transparent;
@@ -170,16 +169,23 @@
             color: var(--color-text-primary);
         }
 
+        /* 更新所有分類顏色 */
+        .category-btn.praise {
+            border-color: var(--color-praise);
+            background: rgba(230, 126, 34, 0.05);
+            color: var(--color-praise);
+        }
+
         .category-btn.worship {
             border-color: var(--color-worship);
             background: rgba(139, 111, 71, 0.05);
             color: var(--color-worship);
         }
 
-        .category-btn.pray {
-            border-color: var(--color-pray);
-            background: rgba(93, 173, 226, 0.05);
-            color: var(--color-pray);
+        .category-btn.prayer {
+            border-color: var(--color-prayer);
+            background: rgba(52, 152, 219, 0.05);
+            color: var(--color-prayer);
         }
 
         .category-btn.thanks {
@@ -192,6 +198,30 @@
             border-color: var(--color-response);
             background: rgba(231, 76, 60, 0.05);
             color: var(--color-response);
+        }
+
+        .category-btn.advent {
+            border-color: var(--color-advent);
+            background: rgba(155, 89, 182, 0.05);
+            color: var(--color-advent);
+        }
+
+        .category-btn.christmas {
+            border-color: var(--color-christmas);
+            background: rgba(39, 174, 96, 0.05);
+            color: var(--color-christmas);
+        }
+
+        .category-btn.lent {
+            border-color: var(--color-lent);
+            background: rgba(52, 73, 94, 0.05);
+            color: var(--color-lent);
+        }
+
+        .category-btn.resurrection {
+            border-color: var(--color-resurrection);
+            background: rgba(241, 196, 15, 0.05);
+            color: var(--color-resurrection);
         }
 
         .category-btn.active {
@@ -221,12 +251,16 @@
             transition: all 0.2s;
         }
 
+        .song-card.praise {
+            border-left-color: var(--color-praise);
+        }
+
         .song-card.worship {
             border-left-color: var(--color-worship);
         }
 
-        .song-card.pray {
-            border-left-color: var(--color-pray);
+        .song-card.prayer {
+            border-left-color: var(--color-prayer);
         }
 
         .song-card.thanks {
@@ -235,6 +269,22 @@
 
         .song-card.response {
             border-left-color: var(--color-response);
+        }
+
+        .song-card.advent {
+            border-left-color: var(--color-advent);
+        }
+
+        .song-card.christmas {
+            border-left-color: var(--color-christmas);
+        }
+
+        .song-card.lent {
+            border-left-color: var(--color-lent);
+        }
+
+        .song-card.resurrection {
+            border-left-color: var(--color-resurrection);
         }
 
         .song-card:hover {
@@ -266,14 +316,19 @@
             margin-bottom: 12px;
         }
 
+        .song-category-badge.praise {
+            background: rgba(230, 126, 34, 0.15);
+            color: var(--color-praise);
+        }
+
         .song-category-badge.worship {
             background: rgba(139, 111, 71, 0.15);
             color: var(--color-worship);
         }
 
-        .song-category-badge.pray {
-            background: rgba(93, 173, 226, 0.15);
-            color: var(--color-pray);
+        .song-category-badge.prayer {
+            background: rgba(52, 152, 219, 0.15);
+            color: var(--color-prayer);
         }
 
         .song-category-badge.thanks {
@@ -284,6 +339,26 @@
         .song-category-badge.response {
             background: rgba(231, 76, 60, 0.15);
             color: var(--color-response);
+        }
+
+        .song-category-badge.advent {
+            background: rgba(155, 89, 182, 0.15);
+            color: var(--color-advent);
+        }
+
+        .song-category-badge.christmas {
+            background: rgba(39, 174, 96, 0.15);
+            color: var(--color-christmas);
+        }
+
+        .song-category-badge.lent {
+            background: rgba(52, 73, 94, 0.15);
+            color: var(--color-lent);
+        }
+
+        .song-category-badge.resurrection {
+            background: rgba(241, 196, 15, 0.15);
+            color: var(--color-resurrection);
         }
 
         .song-note {
@@ -522,35 +597,6 @@
                 flex-direction: column;
             }
         }
-
-        /* 自訂教學樣式，讓它更符合你的主題 */
-        .introjs-tooltip {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        }
-
-        .introjs-button {
-            border-radius: 4px;
-            text-shadow: none;
-            font-size: 12px;
-        }
-
-        .introjs-skipbutton {
-            color: var(--color-text-secondary);
-        }
-
-        .introjs-nextbutton {
-            background: var(--color-primary);
-            color: white;
-            text-shadow: none;
-            border: none;
-        }
-
-        .introjs-prevbutton {
-            border: 1px solid var(--color-border);
-            color: var(--color-text-primary);
-        }
     </style>
 </head>
 
@@ -559,9 +605,6 @@
         <header>
             <h1>🎵 敬拜音樂選擇器</h1>
             <p class="subtitle">組織和管理敬拜音樂</p>
-            <!-- 新增教學按鈕 -->
-            <button class="btn-small" onclick="startTutorial()"
-                style="margin-top: 10px; width: auto; padding: 6px 16px;">❓ 如何使用</button>
         </header>
 
         <div class="main-content">
@@ -583,10 +626,15 @@
                     <label for="songCategory">敬拜分類</label>
                     <select id="songCategory">
                         <option value="">-- 選擇分類 --</option>
+                        <option value="praise">讚美</option>
                         <option value="worship">敬拜</option>
-                        <option value="pray">祈禱</option>
-                        <option value="thanks">感謝</option>
+                        <option value="prayer">祈求</option>
+                        <option value="thanks">信靠/感謝</option>
                         <option value="response">回應</option>
+                        <option value="advent">節期（將臨期）</option>
+                        <option value="christmas">節期（聖誕節）</option>
+                        <option value="lent">節期（預苦期/受難日）</option>
+                        <option value="resurrection">節期（復活節）</option>
                     </select>
                 </div>
 
@@ -620,10 +668,15 @@
                 <h3 style="margin-top: 0; margin-bottom: 16px;">依分類篩選</h3>
                 <div class="category-filters">
                     <button class="category-btn" onclick="filterCategory('all', this)">全部歌曲</button>
+                    <button class="category-btn praise" onclick="filterCategory('praise', this)">讚美</button>
                     <button class="category-btn worship" onclick="filterCategory('worship', this)">敬拜</button>
-                    <button class="category-btn pray" onclick="filterCategory('pray', this)">祈禱</button>
-                    <button class="category-btn thanks" onclick="filterCategory('thanks', this)">感謝</button>
+                    <button class="category-btn prayer" onclick="filterCategory('prayer', this)">祈求</button>
+                    <button class="category-btn thanks" onclick="filterCategory('thanks', this)">信靠/感謝</button>
                     <button class="category-btn response" onclick="filterCategory('response', this)">回應</button>
+                    <button class="category-btn advent" onclick="filterCategory('advent', this)">將臨期</button>
+                    <button class="category-btn christmas" onclick="filterCategory('christmas', this)">聖誕節</button>
+                    <button class="category-btn lent" onclick="filterCategory('lent', this)">預苦期</button>
+                    <button class="category-btn resurrection" onclick="filterCategory('resurrection', this)">復活節</button>
                 </div>
 
                 <div class="data-actions">
@@ -638,8 +691,7 @@
                     <input type="text" id="shareLink" class="share-input" readonly>
                     <div class="share-buttons">
                         <button class="btn-primary" onclick="copyLink()">複製</button>
-                        <button class="btn-secondary"
-                            onclick="document.getElementById('shareSection').style.display='none'">關閉</button>
+                        <button class="btn-secondary" onclick="document.getElementById('shareSection').style.display='none'">關閉</button>
                     </div>
                 </div>
 
@@ -654,20 +706,40 @@
                         <div class="stat-label">全部歌曲</div>
                     </div>
                     <div class="stat-item">
+                        <div class="stat-number" id="praiseCount">0</div>
+                        <div class="stat-label">讚美</div>
+                    </div>
+                    <div class="stat-item">
                         <div class="stat-number" id="worshipCount">0</div>
                         <div class="stat-label">敬拜</div>
                     </div>
                     <div class="stat-item">
-                        <div class="stat-number" id="prayCount">0</div>
-                        <div class="stat-label">祈禱</div>
+                        <div class="stat-number" id="prayerCount">0</div>
+                        <div class="stat-label">祈求</div>
                     </div>
                     <div class="stat-item">
                         <div class="stat-number" id="thanksCount">0</div>
-                        <div class="stat-label">感謝</div>
+                        <div class="stat-label">信靠/感謝</div>
                     </div>
                     <div class="stat-item">
                         <div class="stat-number" id="responseCount">0</div>
                         <div class="stat-label">回應</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="adventCount">0</div>
+                        <div class="stat-label">將臨期</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="christmasCount">0</div>
+                        <div class="stat-label">聖誕節</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="lentCount">0</div>
+                        <div class="stat-label">預苦期</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="resurrectionCount">0</div>
+                        <div class="stat-label">復活節</div>
                     </div>
                 </div>
 
@@ -687,7 +759,18 @@
         let currentFilter = 'all';
         const DB_API = 'https://crcfl-worship-music-selector-default-rtdb.asia-southeast1.firebasedatabase.app';
 
-        const categoryLabels = { worship: '敬拜', pray: '祈禱', thanks: '感謝', response: '回應' };
+        // 更新分類標籤對應
+        const categoryLabels = {
+            praise: '讚美',
+            worship: '敬拜',
+            prayer: '祈求',
+            thanks: '信靠/感謝',
+            response: '回應',
+            advent: '將臨期',
+            christmas: '聖誕節',
+            lent: '預苦期',
+            resurrection: '復活節'
+        };
 
         // 防止 XSS
         function escapeHtml(text) {
@@ -720,7 +803,7 @@
             renderSongs();
             updateStats();
 
-            // 如需同步至 Firebase，可執行儲存函式：
+            // 儲存到 Firebase
             await saveSongToDb(song);
         }
 
@@ -731,10 +814,10 @@
         }
 
         async function deleteSong(id) {
-            if (!confirm(`確定要刪除這首歌曲嗎？${id}`)) return;
-            songs = songs.filter((s) => s.id !== id);
+            if (!confirm('確定要刪除這首歌曲嗎？')) return;
+            songs = songs.filter(s => s.id !== id);
             await deleteSongFromDb(id);
-            await loadSongsFromDb();
+            renderSongs();
             updateStats();
         }
 
@@ -746,7 +829,6 @@
         }
 
         function renderSongs() {
-            console.log('Rendering songs with filter:', songs);
             const container = document.getElementById('songsContainer');
             let filteredSongs = currentFilter === 'all' ? [...songs] : songs.filter(s => s.category === currentFilter);
             if (!filteredSongs.length) {
@@ -755,22 +837,20 @@
             }
 
             container.innerHTML = filteredSongs.map(song => `
-        <div class="song-card ${song.category}">
-          <div class="song-category-badge ${song.category}">${categoryLabels[song.category]}</div>
-          <h3 class="song-title">${escapeHtml(song.title)}</h3>
-          <p class="song-artist">🎤 ${escapeHtml(song.artist)}</p>
-          ${song.note ? `<p class="song-note">📝 ${escapeHtml(song.note)}</p>` : ''}
-          <div class="song-actions">
-            <button class="btn-small" onclick="viewLyrics('${song.recordKey}')">歌詞</button>
-            ${song.youtubeUrl ? `<button class="btn-small" onclick="viewYoutube('${song.recordKey}')">▶️</button>` : ''}
-            ${song.sheetUrl ? `<button class="btn-small" onclick="viewSheet('${song.recordKey}')">📄</button>` : ''}
-            <button class="btn-small" onclick="editSong('${song.recordKey}')">編輯</button>
-            <button class="btn-small btn-delete" onclick="deleteSong('${song.recordKey}')">刪除</button>
-          </div>
-        </div>
-      `).join('');
-
-            updateStats();
+                <div class="song-card ${song.category}">
+                    <div class="song-category-badge ${song.category}">${categoryLabels[song.category]}</div>
+                    <h3 class="song-title">${escapeHtml(song.title)}</h3>
+                    <p class="song-artist">🎤 ${escapeHtml(song.artist)}</p>
+                    ${song.note ? `<p class="song-note">📝 ${escapeHtml(song.note)}</p>` : ''}
+                    <div class="song-actions">
+                        <button class="btn-small" onclick="viewLyrics(${song.id})">歌詞</button>
+                        ${song.youtubeUrl ? `<button class="btn-small" onclick="viewYoutube(${song.id})">▶️</button>` : ''}
+                        ${song.sheetUrl ? `<button class="btn-small" onclick="viewSheet(${song.id})">📄</button>` : ''}
+                        <button class="btn-small" onclick="editSong(${song.id})">編輯</button>
+                        <button class="btn-small btn-delete" onclick="deleteSong(${song.id})">刪除</button>
+                    </div>
+                </div>
+            `).join('');
         }
 
         function viewLyrics(id) {
@@ -795,25 +875,17 @@
 
         function viewYoutube(id) {
             const song = songs.find(s => s.id === id);
-            if (song && song.youtubeUrl) {
-                window.open(song.youtubeUrl, '_blank');
-            }
+            if (song && song.youtubeUrl) window.open(song.youtubeUrl, '_blank');
         }
 
         function viewSheet(id) {
             const song = songs.find(s => s.id === id);
-            if (song && song.sheetUrl) {
-                window.open(song.sheetUrl, '_blank');
-            }
+            if (song && song.sheetUrl) window.open(song.sheetUrl, '_blank');
         }
 
         function editSong(id) {
-            if (!confirm(`確定要編輯這首歌曲嗎？${id}`)) return;
-
-            const song = songs.find(s => s.recordKey === id);
-            console.log('Editing song:', song);
+            const song = songs.find(s => s.id === id);
             if (!song) return;
-
             document.getElementById('songTitle').value = song.title || '';
             document.getElementById('songArtist').value = song.artist || '';
             document.getElementById('songCategory').value = song.category || '';
@@ -821,37 +893,117 @@
             document.getElementById('songLyrics').value = song.lyrics || '';
             document.getElementById('songYoutubeUrl').value = song.youtubeUrl || '';
             document.getElementById('songSheetUrl').value = song.sheetUrl || '';
-            // 刪除舊歌，待編輯後重新新增
             deleteSong(id);
             document.getElementById('songTitle').focus();
         }
 
         function updateStats() {
             const total = songs.length;
+            const praise = songs.filter(s => s.category === 'praise').length;
             const worship = songs.filter(s => s.category === 'worship').length;
-            const pray = songs.filter(s => s.category === 'pray').length;
+            const prayer = songs.filter(s => s.category === 'prayer').length;
             const thanks = songs.filter(s => s.category === 'thanks').length;
             const response = songs.filter(s => s.category === 'response').length;
+            const advent = songs.filter(s => s.category === 'advent').length;
+            const christmas = songs.filter(s => s.category === 'christmas').length;
+            const lent = songs.filter(s => s.category === 'lent').length;
+            const resurrection = songs.filter(s => s.category === 'resurrection').length;
 
             document.getElementById('totalCount').textContent = total;
+            document.getElementById('praiseCount').textContent = praise;
             document.getElementById('worshipCount').textContent = worship;
-            document.getElementById('prayCount').textContent = pray;
+            document.getElementById('prayerCount').textContent = prayer;
             document.getElementById('thanksCount').textContent = thanks;
             document.getElementById('responseCount').textContent = response;
+            document.getElementById('adventCount').textContent = advent;
+            document.getElementById('christmasCount').textContent = christmas;
+            document.getElementById('lentCount').textContent = lent;
+            document.getElementById('resurrectionCount').textContent = resurrection;
         }
 
-        async function saveSongToDb(song) {
-            try {
-                const response = await fetch(`${DB_API}/songs.json`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(song)
-                });
-                return await response.json();
-            } catch (e) {
-                console.error('Save failed:', e);
-                return null;
+        function exportData() {
+            const dataStr = JSON.stringify({ version: 1, exportDate: new Date().toISOString(), songs: songs }, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `worship-songs-${new Date().getTime()}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            alert('✅ JSON 檔案已成功匯出！');
+        }
+
+        function exportToExcel() {
+            if (songs.length === 0) {
+                alert('❌ 沒有歌曲可匯出');
+                return;
             }
+            let csvContent = '\uFEFF'; // BOM for UTF-8
+            csvContent += ['歌曲名稱', '藝術家', '分類', '備註', '歌詞', 'YouTube', '歌譜'].join(',') + '\r\n';
+            songs.forEach(song => {
+                const row = [
+                    `"${(song.title || '').replace(/"/g, '""')}"`,
+                    `"${(song.artist || '').replace(/"/g, '""')}"`,
+                    `"${categoryLabels[song.category] || ''}"`,
+                    `"${(song.note || '').replace(/"/g, '""')}"`,
+                    `"${(song.lyrics || '').replace(/"/g, '""')}"`,
+                    `"${(song.youtubeUrl || '').replace(/"/g, '""')}"`,
+                    `"${(song.sheetUrl || '').replace(/"/g, '""')}"`
+                ].join(',');
+                csvContent += row + '\r\n';
+            });
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `worship-songs-${new Date().getTime()}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            alert('✅ Excel (CSV) 檔案已成功匯出！');
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (data.songs && Array.isArray(data.songs)) {
+                        if (confirm('匯入會覆蓋現有歌曲。是否繼續？')) {
+                            songs = data.songs;
+                            renderSongs();
+                            updateStats();
+                            alert('✅ 歌曲已成功匯入！');
+                        }
+                    } else {
+                        alert('❌ 檔案格式不正確');
+                    }
+                } catch (error) {
+                    alert('❌ 匯入失敗：' + error.message);
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        function shareData() {
+            const shareData = btoa(JSON.stringify(songs));
+            const baseUrl = window.location.origin + window.location.pathname;
+            const shareLink = baseUrl + '?data=' + shareData;
+            document.getElementById('shareLink').value = shareLink;
+            document.getElementById('shareSection').style.display = 'block';
+        }
+
+        function copyLink() {
+            const shareLink = document.getElementById('shareLink');
+            shareLink.select();
+            document.execCommand('copy');
+            alert('✅ 連結已複製到剪貼板！');
         }
 
         async function loadSongsFromDb() {
@@ -882,89 +1034,23 @@
         async function deleteSongFromDb(id) {
             try {
                 if (!id) throw new Error('id required');
-
-                // Firebase REST API DELETE，URL必須以.json結尾
                 const url = `${DB_API}/songs/${id}.json`;
                 const res = await fetch(url, { method: 'DELETE' });
-
                 if (!res.ok) {
                     throw new Error(`Failed to delete: ${res.status}`);
                 }
-
                 console.log('Delete successful:', id);
-                loadSongsFromDb();
+                await loadSongsFromDb();
                 updateStats();
-
-
             } catch (e) {
                 console.error('Delete failed:', e);
             }
         }
 
-        function startTutorial() {
-            introJs().setOptions({
-                nextLabel: '下一步 →',
-                prevLabel: '← 上一步',
-                skipLabel: '跳過',
-                doneLabel: '完成',
-                showProgress: true,
-                steps: [
-                    {
-                        title: '歡迎使用！',
-                        intro: '這是一個幫助你管理和選擇敬拜歌曲的工具。讓我們花 1 分鐘了解如何使用吧！'
-                    },
-                    {
-                        element: document.querySelector('.form-panel'),
-                        intro: '這裡是**控制台**。你可以在這裡新增歌曲、篩選分類，或是匯入匯出資料。',
-                        position: 'right'
-                    },
-                    {
-                        element: document.querySelector('#songTitle'),
-                        intro: '輸入歌曲名稱。這是必填欄位喔！'
-                    },
-                    {
-                        element: document.querySelector('#songCategory'),
-                        intro: '選擇一個適合的**分類**（敬拜、祈禱、感謝、回應），這會幫助你之後快速建立歌單。'
-                    },
-                    {
-                        element: document.querySelector('.button-group'),
-                        intro: '填寫完畢後，點擊「新增歌曲」即可將歌曲加入清單。'
-                    },
-                    {
-                        element: document.querySelector('.category-filters'),
-                        intro: '當歌曲變多時，點擊這裡的按鈕可以快速篩選出特定用途的詩歌。'
-                    },
-                    {
-                        element: document.querySelector('.songs-panel'),
-                        intro: '你新增的歌曲會以卡片形式顯示在這裡。每張卡片都可以查看歌詞、YouTube 或歌譜。'
-                    },
-                    {
-                        element: document.querySelector('.data-actions'),
-                        intro: '怕資料不見？記得定期點擊「匯出 JSON」備份，或是用「分享」功能傳給同工！'
-                    }
-                ]
-            }).start();
-        }
-
-        // 首次訪問自動啟動（可選）
-        document.addEventListener('DOMContentLoaded', () => {
-            // 檢查是否是第一次訪問
-            if (!localStorage.getItem('tutorial_shown')) {
-                // 延遲 1 秒讓頁面載入完全後顯示
-                setTimeout(() => {
-                    startTutorial();
-                    localStorage.setItem('tutorial_shown', 'true');
-                }, 1000);
-            }
-        });
-
-
         // 頁面載入時初始化
         window.addEventListener('DOMContentLoaded', () => {
             loadSongsFromDb();
         });
-
-
     </script>
 
     <!-- Lyrics Modal -->
@@ -977,8 +1063,6 @@
             <div id="lyricsContent" class="lyrics-display"></div>
         </div>
     </div>
-
-    <script src="https://unpkg.com/intro.js/minified/intro.min.js"></script>
 </body>
 
 </html>
