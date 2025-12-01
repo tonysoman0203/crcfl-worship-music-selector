@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -21,8 +22,8 @@
             --color-thanks: #f39c12;
             --color-response: #e74c3c;
             --radius-base: 8px;
-            --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
-            --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+            --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
         * {
@@ -337,8 +338,13 @@
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
         }
 
         .modal-content {
@@ -517,6 +523,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <header>
@@ -598,7 +605,8 @@
                     <input type="text" id="shareLink" class="share-input" readonly>
                     <div class="share-buttons">
                         <button class="btn-primary" onclick="copyLink()">複製</button>
-                        <button class="btn-secondary" onclick="document.getElementById('shareSection').style.display='none'">關閉</button>
+                        <button class="btn-secondary"
+                            onclick="document.getElementById('shareSection').style.display='none'">關閉</button>
                     </div>
                 </div>
 
@@ -641,50 +649,34 @@
     </div>
 
     <script>
-       // 全域變數初始化
-        var songs = [];
-        var currentFilter = 'all';
-        const categoryLabels = {
-            worship: '敬拜',
-            pray: '祈禱', 
-            thanks: '感謝',
-            response: '回應'
-        };
+        // 全域變數
+        let songs = [];
+        let currentFilter = 'all';
+        const DB_API = 'https://crcfl-worship-music-selector-default-rtdb.asia-southeast1.firebasedatabase.app';
 
-        // 確保 escapeHtml 函數存在
+        const categoryLabels = { worship: '敬拜', pray: '祈禱', thanks: '感謝', response: '回應' };
+
+        // 防止 XSS
         function escapeHtml(text) {
-        const map = {
-            '&': '&amp;',
-            '<': '&lt;',
-            '>': '&gt;',
-            '"': '&quot;',
-            "'": '&#039;'
-        };
-        return text.replace(/[&<>"']/g, m => map[m]);
+            const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+            return text.replace(/[&<>"']/g, (m) => map[m]);
         }
 
-        function addSong() {
+        async function addSong() {
             const title = document.getElementById('songTitle').value.trim();
             const artist = document.getElementById('songArtist').value.trim();
             const category = document.getElementById('songCategory').value;
             const note = document.getElementById('songNote').value.trim();
 
-            if (!title) {
-                alert('請輸入歌曲名稱');
-                return;
-            }
-
-            if (!category) {
-                alert('請選擇敬拜分類');
-                return;
-            }
+            if (!title) { alert('請輸入歌曲名稱'); return; }
+            if (!category) { alert('請選擇敬拜分類'); return; }
 
             const song = {
                 id: Date.now(),
-                title: title,
+                title,
                 artist: artist || '未知藝術家',
-                category: category,
-                note: note,
+                category,
+                note,
                 lyrics: document.getElementById('songLyrics').value.trim(),
                 youtubeUrl: document.getElementById('songYoutubeUrl').value.trim(),
                 sheetUrl: document.getElementById('songSheetUrl').value.trim()
@@ -694,120 +686,66 @@
             clearForm();
             renderSongs();
             updateStats();
+
+            // 如需同步至 Firebase，可執行儲存函式：
+            await saveSongToDb(song);
         }
 
         function clearForm() {
-            document.getElementById('songTitle').value = '';
-            document.getElementById('songArtist').value = '';
-            document.getElementById('songCategory').value = '';
-            document.getElementById('songNote').value = '';
-            document.getElementById('songLyrics').value = '';
-            document.getElementById('songYoutubeUrl').value = '';
-            document.getElementById('songSheetUrl').value = '';
+            const ids = ['songTitle', 'songArtist', 'songCategory', 'songNote', 'songLyrics', 'songYoutubeUrl', 'songSheetUrl'];
+            ids.forEach(id => document.getElementById(id).value = '');
             document.getElementById('songTitle').focus();
         }
 
-        function deleteSong(id) {
-            if (confirm('確定要刪除這首歌曲嗎？')) {
-                songs = songs.filter(song => song.id !== id);
-                renderSongs();
-                updateStats();
-            }
+        async function deleteSong(id) {
+            if (!confirm(`確定要刪除這首歌曲嗎？${id}`)) return;
+            songs = songs.filter((s) => s.id !== id);
+            await deleteSongFromDb(id);
+            await loadSongsFromDb();
+            updateStats();
         }
 
         function filterCategory(category, btn) {
             currentFilter = category;
-
-            // Update active button
-            document.querySelectorAll('.category-btn').forEach(button => {
-                button.classList.remove('active');
-            });
+            document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-
             renderSongs();
         }
 
-       function renderSongs() {
-  const container = document.getElementById('songsContainer');
-  
-  // 1. 確保 songs 存在且是陣列
-  let safeSongs = [];
-  if (Array.isArray(songs)) {
-    safeSongs = songs;
-  } else if (songs && typeof songs === 'object') {
-    // Firebase 原始物件轉陣列
-    safeSongs = Object.entries(songs).map(([recordKey, songData]) => ({
-      recordKey,
-      ...songData
-    }));
-  }
-  // songs 是 null/undefined/false，直接空陣列
+        function renderSongs() {
+            console.log('Rendering songs with filter:', songs);
+            const container = document.getElementById('songsContainer');
+            let filteredSongs = currentFilter === 'all' ? [...songs] : songs.filter(s => s.category === currentFilter);
+            if (!filteredSongs.length) {
+                container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🎶</div><p>${currentFilter === 'all' ? '還沒有新增歌曲。' : `此分類中還沒有歌曲。`}<br>開始新增你的敬拜歌曲吧！</p></div>`;
+                return;
+            }
 
-  // 2. 安全過濾
-  const filteredSongs = currentFilter === 'all' 
-    ? safeSongs 
-    : safeSongs.filter(song => song && song.category === currentFilter);
-
-  // 3. 檢查長度前先確認是陣列
-  if (!Array.isArray(filteredSongs) || filteredSongs.length === 0) {
-    container.innerHTML = `
-      <div class="empty-state">
-        <div class="empty-state-icon">🎶</div>
-        <p>${currentFilter === 'all' ? '還沒有新增歌曲。' : `此分類中還沒有歌曲。`}<br>開始新增你的敬拜歌曲吧！</p>
-      </div>
-    `;
-    return;
-  }
-
-  // 4. 安全渲染
-  container.innerHTML = filteredSongs
-    .map(song => {
-      // 雙重防呆：確保 song 存在且有必要欄位
-      if (!song) return '';
-      
-      const domId = song.recordKey || song.id || 'unknown';
-      const safeKey = JSON.stringify(song.recordKey || song.id || 'unknown');
-
-      return `
-        <div id="song-${domId}" class="song-card ${song.category || 'unknown'}">
-          <div class="song-category-badge ${song.category || 'unknown'}">
-            ${categoryLabels[song.category] || song.category || '未知'}
-          </div>
-          <h3 class="song-title">${escapeHtml(song.title || '無標題')}</h3>
-          <p class="song-artist">🎤 ${escapeHtml(song.artist || '未知藝術家')}</p>
+            container.innerHTML = filteredSongs.map(song => `
+        <div class="song-card ${song.category}">
+          <div class="song-category-badge ${song.category}">${categoryLabels[song.category]}</div>
+          <h3 class="song-title">${escapeHtml(song.title)}</h3>
+          <p class="song-artist">🎤 ${escapeHtml(song.artist)}</p>
           ${song.note ? `<p class="song-note">📝 ${escapeHtml(song.note)}</p>` : ''}
           <div class="song-actions">
-            <button class="btn-small" onclick="viewLyrics(${safeKey})">歌詞</button>
-            ${song.youtubeUrl ? `<button class="btn-small" onclick="viewYoutube(${safeKey})">▶️</button>` : ''}
-            ${song.sheetUrl ? `<button class="btn-small" onclick="viewSheet(${safeKey})">📄</button>` : ''}
-            <button class="btn-small" onclick="editSong(${safeKey})">編輯</button>
-            <button class="btn-small btn-delete" onclick="deleteSong(${safeKey})">刪除</button>
+            <button class="btn-small" onclick="viewLyrics('${song.recordKey}')">歌詞</button>
+            ${song.youtubeUrl ? `<button class="btn-small" onclick="viewYoutube('${song.recordKey}')">▶️</button>` : ''}
+            ${song.sheetUrl ? `<button class="btn-small" onclick="viewSheet('${song.recordKey}')">📄</button>` : ''}
+            <button class="btn-small" onclick="editSong('${song.recordKey}')">編輯</button>
+            <button class="btn-small btn-delete" onclick="deleteSong('${song.recordKey}')">刪除</button>
           </div>
         </div>
-      `;
-    })
-    .filter(html => html !== '')  // 過濾掉空項目
-    .join('');
-}
+      `).join('');
 
-        // 抽出來重複用的空狀態
-        function emptyStateHtml(filter) {
-        return `
-            <div class="empty-state">
-            <div class="empty-state-icon">🎶</div>
-            <p>${filter === 'all' ? '還沒有新增歌曲。' : `此分類中還沒有歌曲。`}<br>開始新增你的敬拜歌曲吧！</p>
-            </div>
-        `;
+            updateStats();
         }
 
         function viewLyrics(id) {
             const song = songs.find(s => s.id === id);
             if (!song) return;
-
             const modal = document.getElementById('lyricsModal');
-            document.getElementById('modalTitle').textContent = escapeHtml(song.title) + ' - ' + escapeHtml(song.artist);
+            document.getElementById('modalTitle').textContent = `${escapeHtml(song.title)} - ${escapeHtml(song.artist)}`;
             const lyricsContainer = document.getElementById('lyricsContent');
-            
             if (song.lyrics) {
                 lyricsContainer.textContent = song.lyrics;
                 lyricsContainer.classList.remove('empty');
@@ -815,7 +753,6 @@
                 lyricsContainer.textContent = '此歌曲尚無歌詞';
                 lyricsContainer.classList.add('empty');
             }
-            
             modal.style.display = 'block';
         }
 
@@ -825,35 +762,33 @@
 
         function viewYoutube(id) {
             const song = songs.find(s => s.id === id);
-            if (!song || !song.youtubeUrl) return;
-            window.open(song.youtubeUrl, '_blank');
+            if (song && song.youtubeUrl) {
+                window.open(song.youtubeUrl, '_blank');
+            }
         }
 
         function viewSheet(id) {
             const song = songs.find(s => s.id === id);
-            if (!song || !song.sheetUrl) return;
-            window.open(song.sheetUrl, '_blank');
-        }
-
-        window.onclick = function(event) {
-            const modal = document.getElementById('lyricsModal');
-            if (event.target === modal) {
-                modal.style.display = 'none';
+            if (song && song.sheetUrl) {
+                window.open(song.sheetUrl, '_blank');
             }
         }
 
         function editSong(id) {
-            const song = songs.find(s => s.id === id);
+            if (!confirm(`確定要編輯這首歌曲嗎？${id}`)) return;
+
+            const song = songs.find(s => s.recordKey === id);
+            console.log('Editing song:', song);
             if (!song) return;
 
-            document.getElementById('songTitle').value = song.title;
-            document.getElementById('songArtist').value = song.artist;
-            document.getElementById('songCategory').value = song.category;
-            document.getElementById('songNote').value = song.note;
+            document.getElementById('songTitle').value = song.title || '';
+            document.getElementById('songArtist').value = song.artist || '';
+            document.getElementById('songCategory').value = song.category || '';
+            document.getElementById('songNote').value = song.note || '';
             document.getElementById('songLyrics').value = song.lyrics || '';
             document.getElementById('songYoutubeUrl').value = song.youtubeUrl || '';
             document.getElementById('songSheetUrl').value = song.sheetUrl || '';
-
+            // 刪除舊歌，待編輯後重新新增
             deleteSong(id);
             document.getElementById('songTitle').focus();
         }
@@ -871,148 +806,6 @@
             document.getElementById('thanksCount').textContent = thanks;
             document.getElementById('responseCount').textContent = response;
         }
-
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-
-        function saveSongsToStorage() {
-            localStorage.setItem('worshipSongs', JSON.stringify(songs));
-        }
-
-        function loadSongsFromStorage() {
-            const saved = localStorage.getItem('worshipSongs');
-            if (saved) {
-                try {
-                    songs = JSON.parse(saved);
-                } catch (e) {
-                    console.error('Failed to load songs:', e);
-                }
-            }
-        }
-
-        function exportData() {
-            const dataStr = JSON.stringify({
-                version: 1,
-                exportDate: new Date().toISOString(),
-                songs: songs
-            }, null, 2);
-            
-            const blob = new Blob([dataStr], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `worship-songs-${new Date().getTime()}.json`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            
-            alert('✅ JSON 檔案已成功匯出！');
-        }
-
-        function exportToExcel() {
-            if (songs.length === 0) {
-                alert('❌ 沒有歌曲可匯出');
-                return;
-            }
-
-            let csvContent = '\uFEFF'; // BOM for UTF-8
-            csvContent += ['歌曲名稱', '藝術家', '分類', '備註', '歌詞', 'YouTube', '歌譜'].join(',') + '\r\n';
-            
-            songs.forEach(song => {
-                const row = [
-                    `"${(song.title || '').replace(/"/g, '""')}"`,
-                    `"${(song.artist || '').replace(/"/g, '""')}"`,
-                    `"${categoryLabels[song.category] || ''}"`,
-                    `"${(song.note || '').replace(/"/g, '""')}"`,
-                    `"${(song.lyrics || '').replace(/"/g, '""')}"`,
-                    `"${(song.youtubeUrl || '').replace(/"/g, '""')}"`,
-                    `"${(song.sheetUrl || '').replace(/"/g, '""')}"`
-                ].join(',');
-                csvContent += row + '\r\n';
-            });
-
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            const url = URL.createObjectURL(blob);
-            link.setAttribute('href', url);
-            link.setAttribute('download', `worship-songs-${new Date().getTime()}.csv`);
-            link.style.visibility = 'hidden';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            
-            alert('✅ Excel (CSV) 檔案已成功匯出！');
-        }
-
-        function importData(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const data = JSON.parse(e.target.result);
-                    if (data.songs && Array.isArray(data.songs)) {
-                        if (confirm('匯入會覆蓋現有歌曲。是否繼續？')) {
-                            songs = data.songs;
-                            saveSongsToStorage();
-                            renderSongs();
-                            updateStats();
-                            alert('✅ 歌曲已成功匯入！');
-                        }
-                    } else {
-                        alert('❌ 檔案格式不正確');
-                    }
-                } catch (error) {
-                    alert('❌ 匯入失敗：' + error.message);
-                }
-            };
-            reader.readAsText(file);
-            event.target.value = '';
-        }
-
-        function shareData() {
-            const shareData = btoa(JSON.stringify(songs));
-            const baseUrl = window.location.origin + window.location.pathname;
-            const shareLink = baseUrl + '?data=' + shareData;
-            
-            document.getElementById('shareLink').value = shareLink;
-            document.getElementById('shareSection').style.display = 'block';
-        }
-
-        function copyLink() {
-            const shareLink = document.getElementById('shareLink');
-            shareLink.select();
-            document.execCommand('copy');
-            alert('✅ 連結已複製到剪貼板！');
-        }
-
-        function loadFromShareLink() {
-            const params = new URLSearchParams(window.location.search);
-            const data = params.get('data');
-            
-            if (data) {
-                try {
-                    const decoded = JSON.parse(atob(data));
-                    if (Array.isArray(decoded) && confirm('要載入分享的歌曲嗎？')) {
-                        songs = decoded;
-                        saveSongsToStorage();
-                        renderSongs();
-                        updateStats();
-                        window.history.replaceState({}, document.title, window.location.pathname);
-                    }
-                } catch (e) {
-                    console.error('Failed to load share data:', e);
-                }
-            }
-        }
-
-        // Database setup using Firebase/Supabase
-        const DB_API = 'https://crcfl-worship-music-selector-default-rtdb.asia-southeast1.firebasedatabase.app';
 
         async function saveSongToDb(song) {
             try {
@@ -1032,67 +825,53 @@
             try {
                 const res = await fetch(`${DB_API}/songs.json`);
                 if (!res.ok) {
-                console.warn('No songs found or DB error:', res.status);
-                songs = [];
-                renderSongs();
-                return;
+                    songs = [];
+                    renderSongs();
+                    return;
                 }
-                
                 const rawData = await res.json();
-                
                 if (rawData) {
-                songs = Object.entries(rawData).map(([recordKey, songData]) => ({
-                    recordKey,
-                    ...songData
-                }));
+                    songs = Object.entries(rawData).map(([recordKey, songData]) => ({
+                        recordKey,
+                        ...songData
+                    }));
                 } else {
-                songs = [];
+                    songs = [];
                 }
-                
                 renderSongs();
             } catch (error) {
                 console.error('Load songs error:', error);
-                songs = [];  // 重置為空陣列
+                songs = [];
                 renderSongs();
             }
-            }
-
+        }
 
         async function deleteSongFromDb(id) {
             try {
-                await fetch(`${DB_API}/songs/${id}`, { method: 'DELETE' });
+                if (!id) throw new Error('id required');
+
+                // Firebase REST API DELETE，URL必須以.json結尾
+                const url = `${DB_API}/songs/${id}.json`;
+                const res = await fetch(url, { method: 'DELETE' });
+
+                if (!res.ok) {
+                    throw new Error(`Failed to delete: ${res.status}`);
+                }
+
+                console.log('Delete successful:', id);
+                loadSongsFromDb();
+                updateStats();
+        
+
             } catch (e) {
                 console.error('Delete failed:', e);
             }
         }
 
-        // Hook addSong to save to database
-        const originalAddSong = addSong;
-        addSong = function() {
-            originalAddSong.call(this);
-            const lastSong = songs[songs.length - 1];
-            saveSongToDb(lastSong);
-        }
-
-        // Hook deleteSong to save to database
-        const originalDeleteSong = deleteSong;
-        deleteSong = function(id) {
-            if (confirm('確定要刪除這首歌曲嗎？')) {
-                songs = songs.filter(song => song.id !== id);
-                deleteSongFromDb(id);
-                renderSongs();
-                updateStats();
-            }
-        }
-
-        // Initialize
-        loadSongsFromDb().then(dbSongs => {
-            songs = dbSongs;
-            loadFromShareLink();
-            renderSongs();
-            updateStats();
+        // 頁面載入時初始化
+        window.addEventListener('DOMContentLoaded', () => {
+            loadSongsFromDb();
         });
-
     </script>
 
     <!-- Lyrics Modal -->
@@ -1106,4 +885,5 @@
         </div>
     </div>
 </body>
+
 </html>
