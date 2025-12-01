@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>敬拜音樂選擇器</title>
+    <link rel="stylesheet" href="https://unpkg.com/intro.js/minified/introjs.min.css">
     <style>
         :root {
             --color-bg-primary: #faf8f3;
@@ -521,6 +522,35 @@
                 flex-direction: column;
             }
         }
+
+        /* 自訂教學樣式，讓它更符合你的主題 */
+        .introjs-tooltip {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .introjs-button {
+            border-radius: 4px;
+            text-shadow: none;
+            font-size: 12px;
+        }
+
+        .introjs-skipbutton {
+            color: var(--color-text-secondary);
+        }
+
+        .introjs-nextbutton {
+            background: var(--color-primary);
+            color: white;
+            text-shadow: none;
+            border: none;
+        }
+
+        .introjs-prevbutton {
+            border: 1px solid var(--color-border);
+            color: var(--color-text-primary);
+        }
     </style>
 </head>
 
@@ -529,6 +559,9 @@
         <header>
             <h1>🎵 敬拜音樂選擇器</h1>
             <p class="subtitle">組織和管理敬拜音樂</p>
+            <!-- 新增教學按鈕 -->
+            <button class="btn-small" onclick="startTutorial()"
+                style="margin-top: 10px; width: auto; padding: 6px 16px;">❓ 如何使用</button>
         </header>
 
         <div class="main-content">
@@ -861,17 +894,77 @@
                 console.log('Delete successful:', id);
                 loadSongsFromDb();
                 updateStats();
-        
+
 
             } catch (e) {
                 console.error('Delete failed:', e);
             }
         }
 
+        function startTutorial() {
+            introJs().setOptions({
+                nextLabel: '下一步 →',
+                prevLabel: '← 上一步',
+                skipLabel: '跳過',
+                doneLabel: '完成',
+                showProgress: true,
+                steps: [
+                    {
+                        title: '歡迎使用！',
+                        intro: '這是一個幫助你管理和選擇敬拜歌曲的工具。讓我們花 1 分鐘了解如何使用吧！'
+                    },
+                    {
+                        element: document.querySelector('.form-panel'),
+                        intro: '這裡是**控制台**。你可以在這裡新增歌曲、篩選分類，或是匯入匯出資料。',
+                        position: 'right'
+                    },
+                    {
+                        element: document.querySelector('#songTitle'),
+                        intro: '輸入歌曲名稱。這是必填欄位喔！'
+                    },
+                    {
+                        element: document.querySelector('#songCategory'),
+                        intro: '選擇一個適合的**分類**（敬拜、祈禱、感謝、回應），這會幫助你之後快速建立歌單。'
+                    },
+                    {
+                        element: document.querySelector('.button-group'),
+                        intro: '填寫完畢後，點擊「新增歌曲」即可將歌曲加入清單。'
+                    },
+                    {
+                        element: document.querySelector('.category-filters'),
+                        intro: '當歌曲變多時，點擊這裡的按鈕可以快速篩選出特定用途的詩歌。'
+                    },
+                    {
+                        element: document.querySelector('.songs-panel'),
+                        intro: '你新增的歌曲會以卡片形式顯示在這裡。每張卡片都可以查看歌詞、YouTube 或歌譜。'
+                    },
+                    {
+                        element: document.querySelector('.data-actions'),
+                        intro: '怕資料不見？記得定期點擊「匯出 JSON」備份，或是用「分享」功能傳給同工！'
+                    }
+                ]
+            }).start();
+        }
+
+        // 首次訪問自動啟動（可選）
+        document.addEventListener('DOMContentLoaded', () => {
+            // 檢查是否是第一次訪問
+            if (!localStorage.getItem('tutorial_shown')) {
+                // 延遲 1 秒讓頁面載入完全後顯示
+                setTimeout(() => {
+                    startTutorial();
+                    localStorage.setItem('tutorial_shown', 'true');
+                }, 1000);
+            }
+        });
+
+
         // 頁面載入時初始化
         window.addEventListener('DOMContentLoaded', () => {
             loadSongsFromDb();
         });
+
+
     </script>
 
     <!-- Lyrics Modal -->
@@ -884,6 +977,8 @@
             <div id="lyricsContent" class="lyrics-display"></div>
         </div>
     </div>
+
+    <script src="https://unpkg.com/intro.js/minified/intro.min.js"></script>
 </body>
 
 </html>
